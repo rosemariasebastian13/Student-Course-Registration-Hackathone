@@ -234,4 +234,34 @@ public class RegistrationRepository {
 
         return registrations;
     }
+    // Member 3: Certify a registered student's course completion
+    public boolean certifyCompletion(int registrationId) {
+
+        String sql = """
+            UPDATE registrations
+            SET completed = 1
+            WHERE registration_id = ?
+              AND completed = 0
+              AND student_id IN (
+                  SELECT user_id FROM users
+                  WHERE role = 'STUDENT'
+              )
+            """;
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(1, registrationId);
+
+            int updatedRows = statement.executeUpdate();
+
+            return updatedRows == 1;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "Could not certify course completion.", e);
+        }
+    }
+
 }
