@@ -190,50 +190,58 @@ public class RegistrationRepository {
         return courses;
     }
 
-    // Get registration details for the admin dashboard
-    public List<Object[]> findAllRegistrationDetails() {
+    
+public List<Object[]> findAllRegistrationDetails() {
 
-        String sql = """
-                SELECT u.first_name, u.last_name, u.username,
-                       c.course_code, c.course_name,
-                       r.registration_date
-                FROM registrations r
-                JOIN users u
-                    ON u.user_id = r.student_id
-                JOIN courses c
-                    ON c.course_id = r.course_id
-                WHERE u.role = 'STUDENT'
-                ORDER BY u.last_name, u.first_name, c.course_code
-                """;
+    String sql = """
+            SELECT r.registration_id,
+                   u.first_name, u.last_name, u.username,
+                   c.course_code, c.course_name,
+                   r.registration_date, r.completed
+            FROM registrations r
+            JOIN users u ON u.user_id = r.student_id
+            JOIN courses c ON c.course_id = r.course_id
+            WHERE u.role = 'STUDENT'
+            ORDER BY u.last_name, u.first_name, c.course_code
+            """;
 
-        List<Object[]> registrations = new ArrayList<>();
+    List<Object[]> registrations = new ArrayList<>();
 
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement =
-                     connection.prepareStatement(sql);
-             ResultSet result = statement.executeQuery()) {
+    try (Connection connection = DBConnection.getConnection();
+         PreparedStatement statement =
+                 connection.prepareStatement(sql);
+         ResultSet result = statement.executeQuery()) {
 
-            while (result.next()) {
-                String fullName = (
-                        result.getString("first_name") + " "
-                        + result.getString("last_name")).trim();
+        while (result.next()) {
 
-                registrations.add(new Object[]{
-                        fullName,
-                        result.getString("username"),
-                        result.getString("course_code"),
-                        result.getString("course_name"),
-                        result.getString("registration_date")
-                });
-            }
+            String fullName = (
+                    result.getString("first_name") + " "
+                    + result.getString("last_name")).trim();
 
-        } catch (SQLException e) {
-            throw new RuntimeException(
-                    "Could not retrieve all registration details.", e);
+            String completionStatus =
+                    result.getInt("completed") == 1
+                            ? "Completed"
+                            : "Registered";
+
+            registrations.add(new Object[]{
+                    fullName,
+                    result.getString("username"),
+                    result.getString("course_code"),
+                    result.getString("course_name"),
+                    result.getString("registration_date"),
+                    result.getInt("registration_id"),
+                    completionStatus
+            });
         }
 
-        return registrations;
+    } catch (SQLException e) {
+        throw new RuntimeException(
+                "Could not retrieve all registration details.", e);
     }
+
+    return registrations;
+}
+
     // Member 3: Certify a registered student's course completion
     public boolean certifyCompletion(int registrationId) {
 
