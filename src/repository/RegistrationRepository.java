@@ -190,7 +190,7 @@ public class RegistrationRepository {
         return courses;
     }
 
-    
+    //Display registration completion status
 public List<Object[]> findAllRegistrationDetails() {
 
     String sql = """
